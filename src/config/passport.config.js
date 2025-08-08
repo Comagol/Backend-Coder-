@@ -27,3 +27,31 @@ passport.use(new JwtStrategy(jwtOptions, async (payload, done) => {
   }
 }));
 
+// Estrategia "current" para validar si el usuario esta logeado 
+passport.use('current', new JwtStrategy(jwtOptions, async (payload, done) => {
+  try {
+    const user = await userModel.findById(payload.userId).select('-password');
+    if(!user){
+      return done(null, false);
+    }
+    return done(null, user);
+  } catch (error) {
+    return done(error, false);
+  }
+}));
+
+// serialice and descerialice el usuario 
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await userModel.findById(id).select('-password');
+    done(null, user);
+    } catch (error) {
+      done(error, null);
+    }
+});
+
+export default {passport, jwt};
