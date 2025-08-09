@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { userModel } from '../dao/models/userModel.js';
 import { cartModel } from '../dao/models/cartModel.js';
 import { passport, jwt } from '../config/passport.config.js';
+import e from 'express';
 
 //inicializo el router
 const router = express.Router();
@@ -136,3 +137,38 @@ router.post('/login', async (req, res) => {
   }
 });
 
+//Ruta Current
+router.get('/current', 
+  passport.authenticate('current', { session: false }), 
+  (req, res ) => {
+    try {
+      if(!req.user) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'No autorizado'
+        });
+      }
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Usuario autenticado correctamente',
+        user: {
+          id: req.user._id,
+          first_name: req.user.first_name,
+          last_name: req.user.last_name,
+          email: req.user.email,
+          age: req.user.age,
+          role: req.user.role,
+          cart: req.user.cart
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: 'Error al obtener el usuario autenticado',
+        error: error.message
+      });
+    }
+});
+
+export default router;
