@@ -2,7 +2,7 @@
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import jwt from 'jsonwebtoken';
-import { userModel } from '../dao/models/userModel';
+import { userModel } from '../dao/models/userModel.js';
 
 //Clave secreta para firmar el token
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -22,7 +22,7 @@ passport.use(new JwtStrategy(jwtOptions, async (payload, done) => {
       return done(null, false);
     }
     return done(null, user);
-  } catch (error) {
+  }catch (error) {
     return done(error, false);
   }
 }));
@@ -40,7 +40,7 @@ passport.use('current', new JwtStrategy(jwtOptions, async (payload, done) => {
   }
 }));
 
-// serialice and descerialice el usuario 
+// serialize and deserialize el usuario 
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
