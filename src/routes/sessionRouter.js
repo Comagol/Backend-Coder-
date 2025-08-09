@@ -76,4 +76,63 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Ruta de login
+router.post('/login', async (req, res) => {
+  try {
+    //extraigo las credenciales del body
+    const { email, password } = req.body;
+    //valido si los campos requeridos se enviaron
+    if(!email || !password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email y password son requeridos'
+      });
+    }
+    //busco al usuario en la base de datos mediante el email
+    const user = await userModel.findOne({ email });
+    //valido si el usuario existe
+    if(!user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Credenciales invalidas'
+      });
+    }
+    //verifico la contraseña usando el metodo comparePassword
+    const isPasswordValid = user.comparePassword(password);
+    if (!isPasswordValid) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Credenciales invalidas'
+      });
+    }
+
+    //genero el token JWT
+    const token = jwt.sign(
+      { userId: user._id },
+      JWT_SECRET,
+      { expiresIn: '4h' }
+    );
+
+    //respuesta exitosa con el token y el usuario
+    res.status(200).json({
+      status: 'success',
+      message: 'Login exitoso',
+      token,
+      user: {
+        id: user._id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role,
+        cart: user.cart
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
 
