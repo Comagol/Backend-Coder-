@@ -3,13 +3,11 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { userModel } from '../dao/models/userModel.js';
 import { cartModel } from '../dao/models/cartModel.js';
-import { passport, jwt } from '../config/passport.config.js';
-import e from 'express';
 
 //inicializo el router
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'contraseña_secreta_codercoder123';
 
 router.post('/register', async (req, res) => {
   try {

@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { userModel } from '../dao/models/userModel.js';
 
 //Clave secreta para firmar el token
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'contraseña_secreta_codercoder123';
 
 // configuracion de la estrategia de aut con jwt
 const jwtOptions = {
