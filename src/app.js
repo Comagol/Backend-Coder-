@@ -16,7 +16,7 @@ import './config/passport.config.js';
 
 const app = express();
 dotenv.config({
-    path: './env/.env',
+    path: './.env',
     override: true
 });
 
@@ -42,7 +42,7 @@ app.use('/api/carts', cartRouter);
 app.use('/api/sessions', sessionRouter);
 app.use('/', viewsRouter);
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 const httpServer = app.listen(PORT, () => {
     console.log(`Start server in PORT ${PORT}`);
 });
