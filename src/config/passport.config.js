@@ -1,6 +1,7 @@
 //configuradion de passport para autenticar con jwt
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+import { Strategy as LocalStrategy } from 'passport-local';
 import jwt from 'jsonwebtoken';
 import { userModel } from '../dao/models/userModel.js';
 
@@ -13,19 +14,26 @@ const jwtOptions = {
   secretOrKey: JWT_SECRET
 };
 
-// Estrategia JWT para autentucacion
-passport.use(new JwtStrategy(jwtOptions, async (payload, done) => {
+// configuro la estrategia de autenticacion local
+passport.use(new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password',
+}, async (email, password, done) => {
   try {
-    //busco el usuario por ID del payload
-    const user = await userModel.findById(payload.userId);
-    if(!user){
-      return done(null, false);
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return done(null, false, { message:'Credenciales invalidas'});
+    }
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return done(null, false, { message:'Credenciales invalidas'});
     }
     return done(null, user);
   }catch (error) {
-    return done(error, false);
+    return done(error);
   }
 }));
+
 
 // Estrategia "current" para validar si el usuario esta logeado 
 passport.use('current', new JwtStrategy(jwtOptions, async (payload, done) => {
@@ -40,18 +48,5 @@ passport.use('current', new JwtStrategy(jwtOptions, async (payload, done) => {
   }
 }));
 
-// serialize and deserialize el usuario 
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
 
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await userModel.findById(id).select('-password');
-    done(null, user);
-    } catch (error) {
-      done(error, null);
-    }
-});
-
-export default {passport, jwt};
+export default {passport};
