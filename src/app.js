@@ -3,6 +3,7 @@ import handlebars from 'express-handlebars';
 import {Server} from 'socket.io';
 import mongoose from 'mongoose';
 import passport from 'passport';
+import dotenv from 'dotenv';
 
 import productRouter from './routes/productRouter.js';
 import cartRouter from './routes/cartRouter.js';
@@ -14,6 +15,10 @@ import websocket from './websocket.js';
 import './config/passport.config.js';
 
 const app = express();
+dotenv.config({
+    path: './env/.env',
+    override: true
+});
 
 const uri = 'mongodb+srv://coderhouse:codercoder2023@cluster0.wpxpupc.mongodb.net/entrega-final?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(uri);
