@@ -2,7 +2,6 @@
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Strategy as LocalStrategy } from 'passport-local';
-import jwt from 'jsonwebtoken';
 import { userModel } from '../dao/models/userModel.js';
 
 //Clave secreta para firmar el token
@@ -24,7 +23,7 @@ passport.use(new LocalStrategy({
     if (!user) {
       return done(null, false, { message:'Credenciales invalidas'});
     }
-    const isPasswordValid = await user.comparePassword(password);
+    const isPasswordValid = user.comparePassword(password);
     if (!isPasswordValid) {
       return done(null, false, { message:'Credenciales invalidas'});
     }
@@ -33,7 +32,6 @@ passport.use(new LocalStrategy({
     return done(error);
   }
 }));
-
 
 // Estrategia "current" para validar si el usuario esta logeado 
 passport.use('current', new JwtStrategy(jwtOptions, async (payload, done) => {
