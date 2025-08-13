@@ -23,7 +23,7 @@ router.post('/register', async (req, res) => {
     const existingUser = await userModel.findOne({ email });
     if(existingUser) {
       return res.status(400).json({
-        status: 'erros',
+        status: 'error',
         message: 'El email ya esta registrado'
       });
     }
@@ -50,7 +50,7 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign(
       {userId: newUser._id},
     JWT_SECRET,
-    {expiresIn: '4h'}
+    {expiresIn: '24h'}
   );
 
   res.status(201).json({
@@ -109,13 +109,13 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
-      { expiresIn: '4h' }
+      { expiresIn: '24h' }
     );
 
     //respuesta exitosa con el token y el usuario
-    res.status(200).json({
+    res.status(201).json({
       status: 'success',
-      message: 'Login exitoso',
+      message: 'Usuario registrado correctamente',
       token,
       user: {
         id: user._id,
