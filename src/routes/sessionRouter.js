@@ -76,64 +76,43 @@ router.post('/register', async (req, res) => {
 });
 
 // Ruta de login
-router.post('/login', async (req, res) => {
-  try {
-    //extraigo las credenciales del body
-    const { email, password } = req.body;
-    //valido si los campos requeridos se enviaron
-    if(!email || !password) {
-      return res.status(400).json({
+router.post('/login', (req, res, next) => {
+  passport.authenticate('local', {session: false}, (err, user, info) => {
+    if (err) {
+      return res.status(500).json({
         status: 'error',
-        message: 'Email y password son requeridos'
+        message: 'Error interno del servidor'
       });
     }
-    //busco al usuario en la base de datos mediante el email
-    const user = await userModel.findOne({ email });
-    //valido si el usuario existe
-    if(!user) {
+    if (!user) {
       return res.status(401).json({
         status: 'error',
-        message: 'Credenciales invalidas'
-      });
-    }
-    //verifico la contraseña usando el metodo comparePassword
-    const isPasswordValid = user.comparePassword(password);
-    if (!isPasswordValid) {
-    return res.status(401).json({
-      status: 'error',
-      message: 'Credenciales invalidas'
+        message: info.message || 'Credenciales incorrectas'
       });
     }
 
-    //genero el token JWT
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    //respuesta exitosa con el token y el usuario
-    res.status(201).json({
+    res.status(200).json({
       status: 'success',
-      message: 'Usuario registrado correctamente',
+      message: 'Login exitoso',
       token,
       user: {
         id: user._id,
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
+        age: user.age,
         role: user.role,
         cart: user.cart
       }
     });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Internal server error',
-      error: error.message
-    });
-  }
-});
+  })(req, res, next);
+})
 
 //Ruta Current
 router.get('/current', 
