@@ -77,6 +77,7 @@ router.post('/register', async (req, res) => {
 
 // Ruta de login
 router.post('/login', (req, res, next) => {
+  //autenticacion local
   passport.authenticate('local', {session: false}, (err, user, info) => {
     if (err) {
       return res.status(500).json({
@@ -90,13 +91,13 @@ router.post('/login', (req, res, next) => {
         message: info.message || 'Credenciales incorrectas'
       });
     }
-
+    //genero el token JWT
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
-
+    //Respuesta exitosa de login
     res.status(200).json({
       status: 'success',
       message: 'Login exitoso',
