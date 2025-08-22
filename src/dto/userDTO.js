@@ -9,4 +9,19 @@ export class UserDTO {
     this.age = user.age;
     this.cart = user.cart;
   }
+
+  //metodo estatico para crear DTO desde un documento Mongodb
+  static fromUser(user) {
+    return new UserDTO(user);
+  }
+
+  static getPublicInfo(user) {
+    return {
+      id: user._id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      role: user.role
+    }
+  }
 }
