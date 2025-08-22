@@ -11,5 +11,20 @@ export class ProductDTO {
     this.thumbnail = product.thumbnail || [];
   }
 
-  
+  // metodo estatico para crear DTO dede un documento mongoDb
+  static fromProduct(product) {
+    return new ProductDTO(product);
+  }
+
+  // metodo para obtener info basica de un producto
+  static getBasicInfo(product) {
+    return{
+      id: product._id,
+      title: product.title,
+      price: product.price,
+      stock: product.stock,
+      category: product.category,
+      thumbnail: product.thumbnail[0] || []
+    }
+  }
 }
