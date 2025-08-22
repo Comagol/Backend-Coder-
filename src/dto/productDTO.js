@@ -17,14 +17,7 @@ export class ProductDTO {
   }
 
   // metodo para obtener info basica de un producto
-  static getBasicInfo(product) {
-    return{
-      id: product._id,
-      title: product.title,
-      price: product.price,
-      stock: product.stock,
-      category: product.category,
-      thumbnail: product.thumbnail[0] || []
-    }
+  static fromProducts(products) {
+    return products.map(product => ProductDTO.fromProduct(product));
   }
 }
