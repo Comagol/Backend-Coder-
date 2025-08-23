@@ -41,3 +41,17 @@ export const authorizeRoles = (allowedRoles) => {
     next();
   };
 };
+
+//Middleware combinado: autenticacion + autorizacion
+export const authMiddleware = (allowedRoles) => {
+  return [authenticateUser, authorizeRoles(allowedRoles)];
+};
+
+//middleware solo para autenticacion (sin verificar el rol)
+export const requireAuth = authenticateUser;
+
+//middleware para verificar si el usuario es admin
+export const requireAdmin = authorizeRoles(['admin']);
+
+//middleware para verificar si es usuario o admin
+export const requireUser = authMiddleware(['user', 'admin']);
