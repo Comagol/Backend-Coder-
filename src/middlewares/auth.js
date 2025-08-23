@@ -51,7 +51,7 @@ export const authMiddleware = (allowedRoles) => {
 export const requireAuth = authenticateUser;
 
 //middleware para verificar si el usuario es admin
-export const requireAdmin = authorizeRoles(['admin']);
+export const requireAdmin = authMiddleware(['admin']);
 
 //middleware para verificar si es usuario o admin
 export const requireUser = authMiddleware(['user', 'admin']);

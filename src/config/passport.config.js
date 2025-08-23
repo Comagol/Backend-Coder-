@@ -1,4 +1,4 @@
-//configuradion de passport para autenticar con jwt
+//configuracion de passport para autenticar con jwt
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -47,4 +47,4 @@ passport.use('current', new JwtStrategy(jwtOptions, async (payload, done) => {
 }));
 
 
-export default {passport};
+export default passport;
