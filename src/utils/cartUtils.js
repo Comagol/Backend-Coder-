@@ -1,7 +1,7 @@
 //utilidades para el manejo de carritos
 export class CartUtils {
   //calculo el total del carrito
-  static calculateTotal(cart) {
+  static calculateTotal(products) {
     if (!products || products.length === 0) return 0;
 
     return products.reduce((total, item) => {
@@ -20,7 +20,7 @@ export class CartUtils {
   }
 
   //obtener resumen del carrito
-  static getSummary(cart) {
+  static getCartSummary(cart) {
     return {
       id: cart._id,
       products: cart.products || [],
@@ -34,7 +34,7 @@ export class CartUtils {
     if (cartData.products && !Array.isArray(cartData.products)) {
       throw new Error('El campo products debe ser un array');
     }
-    if (cart.Data.products) {
+    if (cartData.products) {
       cartData.products.forEach((item, index) => {
         if (!item.product) {
           throw new Error(`El producto en la posicion ${index} es invalido`);

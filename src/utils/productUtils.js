@@ -21,7 +21,7 @@ export class ProductUtils {
   }
 
   //obtener informacion basica de un producto
-  static gatBasicInfo(product) {
+  static getBasicInfo(product) {
     return {
       id: product._id,
       title: product.title,
@@ -29,7 +29,7 @@ export class ProductUtils {
       price: product.price,
       stock: product.stock,
       category: product.category,
-      thumbnail: product.thumbnail || []
+      thumbnails: product.thumbnails || []
     };
   }
 }
