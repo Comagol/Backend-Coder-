@@ -3,6 +3,8 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { userModel } from '../dao/models/userModel.js';
 import { cartModel } from '../dao/models/cartModel.js';
+import { UserDTO } from '../dao/dto/userDTO.js';
+import { UserUtils } from '../utils/userUtils.js';
 
 //inicializo el router
 const router = express.Router();
@@ -12,11 +14,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'contraseña_secreta_codercoder123'
 router.post('/register', async (req, res) => {
   try {
     const { first_name, last_name, email, password, age } = req.body;
-    //valido los campos requeridos
-    if(!first_name || !last_name || !email || !password || !age) {
+    //valido los campos requeridos con userUtils
+    try {
+      UserUtils.validateUserData(req.body);
+    } catch (error) {
       return res.status(400).json({
         status: 'error',
-        message: 'Todos los campos son requeridos'
+        message: error.message
       });
     }
     //valido si el usuario ya existe en la base de datos
@@ -32,6 +36,7 @@ router.post('/register', async (req, res) => {
     const newCart = new cartModel({
       products: []
     });
+    await newCart.save();
 
     // creo al nuevo usuario
     const newUser = new userModel({
@@ -43,7 +48,7 @@ router.post('/register', async (req, res) => {
       cart: newCart._id
     });
 
-    //guardo el usuario y el carrito
+    //guardo el usuario
     await newUser.save();
 
     //genero el token JWT
@@ -53,18 +58,12 @@ router.post('/register', async (req, res) => {
     {expiresIn: '24h'}
   );
 
+  const userDTO = UserDTO.fromUser(newUser);
   res.status(201).json({
     status: 'success',
     message: 'Usuario registrado correctamente',
     token,
-    user: {
-      id: newUser._id,
-      first_name: newUser.first_name,
-      last_name: newUser.last_name,
-      email: newUser.email,
-      age: newUser.age,
-      cart: newUser.cart
-    }
+    user: userDTO
   });
   } catch (error) {
     res.status(500).json({
@@ -98,19 +97,12 @@ router.post('/login', (req, res, next) => {
       { expiresIn: '24h' }
     );
     //Respuesta exitosa de login
+    const userDTO = UserDTO.fromUser(user);
     res.status(200).json({
       status: 'success',
       message: 'Login exitoso',
       token,
-      user: {
-        id: user._id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        age: user.age,
-        role: user.role,
-        cart: user.cart
-      }
+      user: userDTO
     });
   })(req, res, next);
 })
@@ -127,18 +119,11 @@ router.get('/current',
         });
       }
 
+      const publicUserInfo = UserUtils.getPublicInfo(req.user);
       res.status(200).json({
         status: 'success',
         message: 'Usuario autenticado correctamente',
-        user: {
-          id: req.user._id,
-          first_name: req.user.first_name,
-          last_name: req.user.last_name,
-          email: req.user.email,
-          age: req.user.age,
-          role: req.user.role,
-          cart: req.user.cart
-        }
+        user: publicUserInfo
       });
     } catch (error) {
       res.status(500).json({
