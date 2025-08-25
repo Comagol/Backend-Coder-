@@ -121,7 +121,7 @@ router.delete('/:cid/product/:pid',requireUser , async (req, res) => {
     }
 });
 
-router.put('/:cid', async (req, res) => {
+router.put('/:cid',requireUser ,  async (req, res) => {
 
     try {
         const result = await CartService.updateAllProducts(req.params.cid, req.body.products)
