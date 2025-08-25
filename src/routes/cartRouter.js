@@ -121,18 +121,38 @@ router.delete('/:cid/product/:pid',requireUser , async (req, res) => {
     }
 });
 
-router.put('/:cid',requireUser ,  async (req, res) => {
+router.put('/:cid',requireUser, async (req, res) => {
 
     try {
-        const result = await CartService.updateAllProducts(req.params.cid, req.body.products)
-        res.send({
+        if (req.user.cart.toString() !== req.params.cid) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No tienes permisos para modificar este carrito'
+            });
+        }
+
+        //valido los daros del carrito
+        try {
+            CartUtils.validateCartData(req.body);
+        } catch (error) {
+            return res.status(400).json({
+                status: 'error',
+                message: validationError.message
+            });
+        }
+
+        const result = await CartService.updateAllProducts(req.params.cid, req.body.products);
+
+        res.json({
             status: 'success',
+            message: 'Carrito actualizado correctamente',
             payload: result
         });
     } catch (error) {
-        res.status(400).send({
+        console.error('Error al actualizar el carrito:', error);
+        res.status(500).json({
             status: 'error',
-            message: error.message
+            message: 'Error interno del servidor al actualizar el carrito'
         });
     }
 });
