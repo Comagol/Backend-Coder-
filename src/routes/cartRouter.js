@@ -1,23 +1,43 @@
 import { Router } from 'express';
 import { productDBManager } from '../dao/productDBManager.js';
 import { cartDBManager } from '../dao/cartDBManager.js';
+import { CartDTO } from '../dto/cartDTO.js';
+import { CartUtils } from '../utils/cartUtils.js';
+import { requireUser } from '../middlewares/auth.js';
 
 const router = Router();
 const ProductService = new productDBManager();
 const CartService = new cartDBManager(ProductService);
 
-router.get('/:cid', async (req, res) => {
+router.get('/:cid', requireUser, async (req, res) => {
 
     try {
+        if (req.user.cart.toString() !== req.params.cid) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No tienes permisos para acceder a este carrito'
+            });
+        }
+
         const result = await CartService.getProductsFromCartByID(req.params.cid);
-        res.send({
+
+        const cartSummary = CartUtils.getCartSummary(result);
+
+        const cartDTO = CartDTO.fromCart(result);
+
+        res.json({
             status: 'success',
-            payload: result
+            payload: {
+                ...cartDTO,
+                total: cartSummary.total,
+                totalItems: cartSummary.totalItems,
+            }
         });
     } catch (error) {
-        res.status(400).send({
+        console.error('Error al obtener el carrito:', error);
+        res.status(404).json({
             status: 'error',
-            message: error.message
+            message: error.message || 'Carrito no encontrado'
         });
     }
 });
