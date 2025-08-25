@@ -95,18 +95,28 @@ router.post('/:cid/product/:pid', requireUser, async (req, res) => {
     }
 });
 
-router.delete('/:cid/product/:pid', async (req, res) => {
+router.delete('/:cid/product/:pid',requireUser , async (req, res) => {
 
     try {
-        const result = await CartService.deleteProductByID(req.params.cid, req.params.pid)
-        res.send({
+        if (req.user.cart.toString() !== req.params.cid) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No tienes permisos para modificar este carrito'
+            });
+        }
+
+        const result = await CartService.deleteProductByID(req.params.cid, req.params.pid);
+
+        res.json({
             status: 'success',
+            message: 'Producto eliminado del carrito correctamente',
             payload: result
         });
     } catch (error) {
-        res.status(400).send({
+        console.error('Error eliminando el producto del carrito:', error);
+        res.status(400).json({
             status: 'error',
-            message: error.message
+            message: error.message || 'Error al eliminar el producto del carrito'
         });
     }
 });
