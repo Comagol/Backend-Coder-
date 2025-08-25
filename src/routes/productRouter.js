@@ -8,13 +8,36 @@ import { requireAdmin, requireUser } from '../middlewares/auth.js';
 const router = Router();
 const ProductService = new productDBManager();
 
+// getl all products es una ruta publica
 router.get('/', async (req, res) => {
-    const result = await ProductService.getAllProducts(req.query);
+    try {
 
-    res.send({
-        status: 'success',
-        payload: result
-    });
+        const result = await ProductService.getAllProducts(req.query);
+        const productDTO = ProductDTO.fromProduct(result.docs);
+        res.json({
+            status: 'success',
+            payload: {
+                docs: productDTO,
+                totalDocs: result.totalDocs,
+                limit: result.limit,
+                totalPages: result.totalPages,
+                page: result.page,
+                pagingCounter: result.pagingCounter,
+                hasPrevPage: result.hasPrevPage,
+                hasNextPage: result.hasNextPage,
+                prevPage: result.prevPage,
+                nextPage: result.nextPage,
+                prevLink: result.prevLink,
+                nextLink: result.nextLink
+            }
+        })
+    } catch (error) {
+        console.error('Error obteniendo productos:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Error interno del servidor al obtener productos'
+        });
+    }
 });
 
 router.get('/:pid', async (req, res) => {
