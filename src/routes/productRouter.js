@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { productDBManager } from '../dao/productDBManager.js';
 import { uploader } from '../utils/multerUtil.js';
+import { ProductDTO } from '../dao/dto/productDTO.js';
+import { ProductUtils } from '../utils/productUtils.js';
+import { requireAdmin, requireUser } from '../middlewares/auth.js';
 
 const router = Router();
 const ProductService = new productDBManager();
