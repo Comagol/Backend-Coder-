@@ -44,14 +44,16 @@ router.get('/:pid', async (req, res) => {
 
     try {
         const result = await ProductService.getProductByID(req.params.pid);
-        res.send({
+        const productDTO = ProductDTO.fromProduct(result);
+        res.json({
             status: 'success',
-            payload: result
+            payload: productDTO
         });
     } catch (error) {
-        res.status(400).send({
+        console.error('Error obteniendo producto:', error);
+        res.status(404).json({
             status: 'error',
-            message: error.message
+            message: 'Producto no encontrado'
         });
     }
 });
