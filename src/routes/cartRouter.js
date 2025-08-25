@@ -63,18 +63,34 @@ router.post('/', requireUser, async (req, res) => {
     }
 });
 
-router.post('/:cid/product/:pid', async (req, res) => {
+router.post('/:cid/product/:pid', requireUser, async (req, res) => {
 
     try {
-        const result = await CartService.addProductByID(req.params.cid, req.params.pid)
-        res.send({
+        if (req.user.cart.toString() !== req.params.cid) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No tienes permisos para acceder a este carrito'
+            });
+        }
+
+        const result = await CartService.addProductByID(req.params.cid, req.params.pid);
+
+        const cartSummary = CartUtils.getCartSummary(result);
+
+        res.json({
             status: 'success',
-            payload: result
+            message: 'Producto agregado al carrito correctamente',
+            payload: {
+                cart: result,
+                total: cartSummary.total,
+                totalItems: cartSummary.totalItems
+            }
         });
     } catch (error) {
-        res.status(400).send({
+        console.error('Error agregando producto al carrito:', error);
+        res.status(400).json({
             status: 'error',
-            message: error.message
+            message: error.message || 'Error al agregar producto al carrito'
         });
     }
 });
