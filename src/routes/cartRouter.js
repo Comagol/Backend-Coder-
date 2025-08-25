@@ -42,18 +42,23 @@ router.get('/:cid', requireUser, async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireUser, async (req, res) => {
 
     try {
-        const result = await CartService.createCart();
-        res.send({
+        const result = await CartService.createCart()
+
+        const cartDTO = CartDTO.fromCart(result)
+
+        res.status(201).json({
             status: 'success',
-            payload: result
-        });
+            message: 'Carrito creado correctamente',
+            payload: cartDTO
+        })
     } catch (error) {
-        res.status(400).send({
+        console.error('Error al crear el carrito:', error);
+        res.status(500).json({
             status: 'error',
-            message: error.message
+            message: 'Error interno del servido al crear el carrito'
         });
     }
 });
