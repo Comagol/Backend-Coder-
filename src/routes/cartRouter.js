@@ -190,18 +190,27 @@ router.put('/:cid/product/:pid', requireUser, async (req, res) => {
     }
 });
 
-router.delete('/:cid', async (req, res) => {
-
+router.delete('/:cid', requireUser, async (req, res) => {
     try {
-        const result = await CartService.deleteAllProducts(req.params.cid)
-        res.send({
+        if (req.user.cart.toString() !== req.params.cid) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No tienes permisos para modificar este carrito'
+            });
+        }
+
+        const result = await CartService.deleteAllProducts(req.params.cid);
+        
+        res.json({
             status: 'success',
+            message: 'Carrito vaciado correctamente',
             payload: result
         });
     } catch (error) {
-        res.status(400).send({
+        console.error('Error vaciando carrito:', error);
+        res.status(500).json({
             status: 'error',
-            message: error.message
+            message: 'Error interno del servidor al vaciar carrito'
         });
     }
 });
