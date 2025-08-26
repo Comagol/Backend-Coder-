@@ -157,18 +157,35 @@ router.put('/:cid',requireUser, async (req, res) => {
     }
 });
 
-router.put('/:cid/product/:pid', async (req, res) => {
-
+router.put('/:cid/product/:pid', requireUser, async (req, res) => {
     try {
-        const result = await CartService.updateProductByID(req.params.cid, req.params.pid, req.body.quantity)
-        res.send({
+        if (req.user.cart.toString() !== req.params.cid) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No tienes permisos para modificar este carrito'
+            });
+        }
+
+        const { quantity } = req.body;
+        if (!quantity || quantity < 1) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'La cantidad debe ser mayor a 0'
+            });
+        }
+
+        const result = await CartService.updateProductByID(req.params.cid, req.params.pid, quantity);
+        
+        res.json({
             status: 'success',
+            message: 'Cantidad actualizada correctamente',
             payload: result
         });
     } catch (error) {
-        res.status(400).send({
+        console.error('Error actualizando cantidad:', error);
+        res.status(400).json({
             status: 'error',
-            message: error.message
+            message: error.message || 'Error al actualizar cantidad'
         });
     }
 });
