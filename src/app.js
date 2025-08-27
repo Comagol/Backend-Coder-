@@ -9,6 +9,7 @@ import productRouter from './routes/productRouter.js';
 import cartRouter from './routes/cartRouter.js';
 import viewsRouter from './routes/viewsRouter.js';
 import sessionRouter from './routes/sessionRouter.js';
+import ticketRouter from './routes/ticketRouter.js';
 import __dirname from './utils/constantsUtil.js';
 import websocket from './websocket.js';
 
@@ -20,7 +21,7 @@ dotenv.config({
     override: true
 });
 
-const uri = 'mongodb+srv://coderhouse:codercoder2023@cluster0.wpxpupc.mongodb.net/entrega-final?retryWrites=true&w=majority&appName=Cluster0';
+const uri = process.env.MONGODB_URI || 'mongodb+srv://coderhouse:codercoder2023@cluster0.wpxpupc.mongodb.net/entrega-final?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(uri);
 
 //Handlebars Config
@@ -40,6 +41,7 @@ app.use(passport.initialize());
 app.use('/api/products', productRouter);
 app.use('/api/carts', cartRouter);
 app.use('/api/sessions', sessionRouter);
+app.use('/api/tickets', ticketRouter);
 app.use('/', viewsRouter);
 
 const PORT = process.env.PORT || 8080;
