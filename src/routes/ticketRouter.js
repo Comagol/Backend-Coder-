@@ -86,3 +86,30 @@ router.post('/purchase', requireUser, async (req , res) => {
   });
 }
 });
+
+// get /api/tickets - para obtener todos los tickets del usuario
+router.get('/', requireUser, async(req,res) => {
+  try {
+    const tickets = await ticketModel.find({ purchaser: req.user.email})
+    .populate('products.product', 'title price')
+    .sort({ purchaser_datetime: -1 });
+
+    const ticketsFormatted = tickets.map(ticket => ({
+      code: ticket.code,
+      purchase_datetime: ticket.purchase_datetime,
+      amount: ticket.amount,
+      products: ticket.products,
+      status: ticket.status
+    }));
+    res.json({
+      status: 'success',
+      payload: ticketsFormatted
+    });
+  } catch (error) {
+    console.error('Error obteniendo tickets:', error);
+    res.status(500).json({
+      status:'error',
+      message: 'Error interno del servidor al obtener los tickets'
+    });
+  }
+});
