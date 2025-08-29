@@ -1,17 +1,15 @@
 import { Router } from 'express';
-import { productDBManager } from '../dao/productDBManager.js';
-import { cartDBManager } from '../dao/cartDBManager.js';
-import { CartDTO } from '../dto/cartDTO.js';
-import { CartUtils } from '../utils/cartUtils.js';
+import { CartRepository } from '../repositories/index.js';
 import { requireUser } from '../middlewares/auth.js';
 
 const router = Router();
-const ProductService = new productDBManager();
-const CartService = new cartDBManager(ProductService);
+const cartRepository = new CartRepository();
 
+
+// GET /api/carts/:cid - Obtener carrito por ID (SOLO USUARIO AUTENTICADO)
 router.get('/:cid', requireUser, async (req, res) => {
-
     try {
+        // Verifico que el usuario solo acceda a su propio carrito
         if (req.user.cart.toString() !== req.params.cid) {
             return res.status(403).json({
                 status: 'error',
@@ -19,22 +17,19 @@ router.get('/:cid', requireUser, async (req, res) => {
             });
         }
 
-        const result = await CartService.getProductsFromCartByID(req.params.cid);
-
-        const cartSummary = CartUtils.getCartSummary(result);
-
-        const cartDTO = CartDTO.fromCart(result);
-
+        const cartDTO = await cartRepository.getCartById(req.params.cid);
+        const cartSummary = await cartRepository.getCartSummary(req.params.cid);
+        
         res.json({
             status: 'success',
             payload: {
                 ...cartDTO,
                 total: cartSummary.total,
-                totalItems: cartSummary.totalItems,
+                totalItems: cartSummary.totalItems
             }
         });
     } catch (error) {
-        console.error('Error al obtener el carrito:', error);
+        console.error('Error obteniendo carrito:', error);
         res.status(404).json({
             status: 'error',
             message: error.message || 'Carrito no encontrado'
@@ -42,41 +37,39 @@ router.get('/:cid', requireUser, async (req, res) => {
     }
 });
 
+// POST /api/carts - Crear nuevo carrito (SOLO USUARIO AUTENTICADO)
 router.post('/', requireUser, async (req, res) => {
-
     try {
-        const result = await CartService.createCart()
-
-        const cartDTO = CartDTO.fromCart(result)
-
+        const cartDTO = await cartRepository.createCart();
+        
         res.status(201).json({
             status: 'success',
             message: 'Carrito creado correctamente',
             payload: cartDTO
-        })
+        });
     } catch (error) {
-        console.error('Error al crear el carrito:', error);
+        console.error('Error creando carrito:', error);
         res.status(500).json({
             status: 'error',
-            message: 'Error interno del servido al crear el carrito'
+            message: 'Error interno del servidor al crear carrito'
         });
     }
 });
 
+// POST /api/carts/:cid/product/:pid - Agregar producto al carrito (SOLO USUARIO AUTENTICADO)
 router.post('/:cid/product/:pid', requireUser, async (req, res) => {
-
     try {
+        // Verifico que el usuario solo acceda a su propio carrito
         if (req.user.cart.toString() !== req.params.cid) {
             return res.status(403).json({
                 status: 'error',
-                message: 'No tienes permisos para acceder a este carrito'
+                message: 'No tienes permisos para modificar este carrito'
             });
         }
 
-        const result = await CartService.addProductByID(req.params.cid, req.params.pid);
-
-        const cartSummary = CartUtils.getCartSummary(result);
-
+        const result = await cartRepository.addProductToCart(req.params.cid, req.params.pid);
+        const cartSummary = await cartRepository.getCartSummary(req.params.cid);
+        
         res.json({
             status: 'success',
             message: 'Producto agregado al carrito correctamente',
@@ -95,9 +88,10 @@ router.post('/:cid/product/:pid', requireUser, async (req, res) => {
     }
 });
 
-router.delete('/:cid/product/:pid',requireUser , async (req, res) => {
-
+// DELETE /api/carts/:cid/product/:pid - Eliminar producto del carrito (SOLO USUARIO AUTENTICADO)
+router.delete('/:cid/product/:pid', requireUser, async (req, res) => {
     try {
+        // Verifico que el usuario solo acceda a su propio carrito
         if (req.user.cart.toString() !== req.params.cid) {
             return res.status(403).json({
                 status: 'error',
@@ -105,25 +99,26 @@ router.delete('/:cid/product/:pid',requireUser , async (req, res) => {
             });
         }
 
-        const result = await CartService.deleteProductByID(req.params.cid, req.params.pid);
-
+        const result = await cartRepository.removeProductFromCart(req.params.cid, req.params.pid);
+        
         res.json({
             status: 'success',
             message: 'Producto eliminado del carrito correctamente',
             payload: result
         });
     } catch (error) {
-        console.error('Error eliminando el producto del carrito:', error);
+        console.error('Error eliminando producto del carrito:', error);
         res.status(400).json({
             status: 'error',
-            message: error.message || 'Error al eliminar el producto del carrito'
+            message: error.message || 'Error al eliminar producto del carrito'
         });
     }
 });
 
-router.put('/:cid',requireUser, async (req, res) => {
-
+// PUT /api/carts/:cid - Actualizar todos los productos del carrito (SOLO USUARIO AUTENTICADO)
+router.put('/:cid', requireUser, async (req, res) => {
     try {
+        // Verifico que el usuario solo acceda a su propio carrito
         if (req.user.cart.toString() !== req.params.cid) {
             return res.status(403).json({
                 status: 'error',
@@ -131,34 +126,27 @@ router.put('/:cid',requireUser, async (req, res) => {
             });
         }
 
-        //valido los daros del carrito
-        try {
-            CartUtils.validateCartData(req.body);
-        } catch (error) {
-            return res.status(400).json({
-                status: 'error',
-                message: validationError.message
-            });
-        }
-
-        const result = await CartService.updateAllProducts(req.params.cid, req.body.products);
-
+        const result = await cartRepository.updateCartProducts(req.params.cid, req.body.products);
+        
         res.json({
             status: 'success',
             message: 'Carrito actualizado correctamente',
             payload: result
         });
     } catch (error) {
-        console.error('Error al actualizar el carrito:', error);
-        res.status(500).json({
+        console.error('Error actualizando carrito:', error);
+        res.status(400).json({
             status: 'error',
-            message: 'Error interno del servidor al actualizar el carrito'
+            message: error.message || 'Error interno del servidor al actualizar carrito'
         });
     }
 });
 
+
+// PUT /api/carts/:cid/product/:pid - Actualizar cantidad de producto (SOLO USUARIO AUTENTICADO)
 router.put('/:cid/product/:pid', requireUser, async (req, res) => {
     try {
+        // Verifico que el usuario solo acceda a su propio carrito
         if (req.user.cart.toString() !== req.params.cid) {
             return res.status(403).json({
                 status: 'error',
@@ -167,14 +155,7 @@ router.put('/:cid/product/:pid', requireUser, async (req, res) => {
         }
 
         const { quantity } = req.body;
-        if (!quantity || quantity < 1) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'La cantidad debe ser mayor a 0'
-            });
-        }
-
-        const result = await CartService.updateProductByID(req.params.cid, req.params.pid, quantity);
+        const result = await cartRepository.updateProductQuantity(req.params.cid, req.params.pid, quantity);
         
         res.json({
             status: 'success',
@@ -190,8 +171,10 @@ router.put('/:cid/product/:pid', requireUser, async (req, res) => {
     }
 });
 
+// DELETE /api/carts/:cid - Vaciar carrito (SOLO USUARIO AUTENTICADO)
 router.delete('/:cid', requireUser, async (req, res) => {
     try {
+        // Verifico que el usuario solo acceda a su propio carrito
         if (req.user.cart.toString() !== req.params.cid) {
             return res.status(403).json({
                 status: 'error',
@@ -199,7 +182,7 @@ router.delete('/:cid', requireUser, async (req, res) => {
             });
         }
 
-        const result = await CartService.deleteAllProducts(req.params.cid);
+        const result = await cartRepository.clearCart(req.params.cid);
         
         res.json({
             status: 'success',
