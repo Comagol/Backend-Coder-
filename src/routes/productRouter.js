@@ -40,6 +40,7 @@ router.get("/:pid", async (req, res) => {
     }
   });
 
+// POST /api/products - Crear producto (SOLO ADMIN)
   router.post("/", uploader.array("thumbnails", 3), requireAdmin, async (req, res) => {
     try {
       if (req.files) {
