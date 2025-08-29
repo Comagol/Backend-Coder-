@@ -6,7 +6,7 @@ import { UserUtils } from '../utils/userUtils.js';
 // Extiendo la clase base para crear el repositorio de usuarios
 export class UserRepository extends BaseRepository {
     constructor() {
-        super(null); // No hay DAO específico para usuarios
+        super(null);
     }
 
     // Metodo para obtener un usuario por su email
