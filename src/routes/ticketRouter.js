@@ -5,8 +5,9 @@ import { ProductRepository } from '../repositories/index.js';
 import { requireUser } from '../middlewares/auth.js';
 
 const router = Router();
-const ProductService = new productDBManager();
-const CartService = new cartDBManager(ProductService);
+const ticketRepository = new TicketRepository();
+const cartRepository = new CartRepository();
+const productRepository = new ProductRepository();
 
 // POST /api/tickets/purchase - para procesar la compra del carrito
 router.post('/purchase', requireUser, async (req, res) => {
