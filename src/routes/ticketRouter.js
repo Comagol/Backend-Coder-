@@ -9,14 +9,14 @@ const ticketRepository = new TicketRepository();
 const cartRepository = new CartRepository();
 const productRepository = new ProductRepository();
 
-// POST /api/tickets/purchase - para procesar la compra del carrito
+// POST /api/tickets/purchase - Procesar compra del carrito
 router.post('/purchase', requireUser, async (req, res) => {
     try {
         const userId = req.user._id;
         const userCartId = req.user.cart;
 
-        // Obtengo el carrito del usuario
-        const cart = await CartService.getProductsFromCartByID(userCartId);
+        // Obtener el carrito del usuario usando repository
+        const cart = await cartRepository.getCartById(userCartId);
         
         if (!cart || cart.products.length === 0) {
             return res.status(400).json({
@@ -25,7 +25,7 @@ router.post('/purchase', requireUser, async (req, res) => {
             });
         }
 
-        // Verifico stock de todos los productos
+        // Verificar stock de todos los productos
         const stockValidation = await validateStock(cart.products);
         
         if (!stockValidation.isValid) {
@@ -36,11 +36,12 @@ router.post('/purchase', requireUser, async (req, res) => {
             });
         }
 
-        // Calculo el total de la compra
-        const total = CartUtils.calculateTotal(cart.products);
+        // Calcular total de la compra
+        const cartSummary = await cartRepository.getCartSummary(userCartId);
+        const total = cartSummary.total;
 
-        // Creo el ticket con estado 'completed'
-        const ticket = new ticketModel({
+        // Crear el ticket con estado 'completed'
+        const ticketData = {
             purchaser: req.user.email,
             amount: total,
             products: cart.products.map(item => ({
@@ -49,36 +50,27 @@ router.post('/purchase', requireUser, async (req, res) => {
                 price: item.product.price
             })),
             status: 'completed'
-        });
+        };
 
-        await ticket.save();
+        const ticket = await ticketRepository.createTicket(ticketData);
 
-        // Actualizo el stock de los productos
+        // Actualizar stock de productos
         await updateProductStock(cart.products);
 
-        // Vacio el carrito despues de la compra exitosa
-        await CartService.deleteAllProducts(userCartId);
-
-        // Obtengo la informacion completa del ticket
-        const populatedTicket = await ticketModel.findById(ticket._id)
-            .populate({
-                path: 'products.product',
-                select: 'title price',
-                model: 'products'
-            })
-            .exec();
+        // Vaciar el carrito después de la compra exitosa
+        await cartRepository.clearCart(userCartId);
 
         res.status(201).json({
             status: 'success',
             message: 'Compra procesada correctamente',
             payload: {
                 ticket: {
-                    code: populatedTicket.code,
-                    purchase_datetime: populatedTicket.purchase_datetime,
-                    amount: populatedTicket.amount,
-                    purchaser: populatedTicket.purchaser,
-                    products: populatedTicket.products,
-                    status: populatedTicket.status
+                    code: ticket.code,
+                    purchase_datetime: ticket.purchase_datetime,
+                    amount: ticket.amount,
+                    purchaser: ticket.purchaser,
+                    products: ticket.products,
+                    status: ticket.status
                 },
                 total: total,
                 itemsPurchased: cart.products.length
@@ -94,17 +86,10 @@ router.post('/purchase', requireUser, async (req, res) => {
     }
 });
 
-// GET /api/tickets - Obtengo todos los tickets del usuario
+// GET /api/tickets - Obtener tickets del usuario
 router.get('/', requireUser, async (req, res) => {
     try {
-        const tickets = await ticketModel.find({ purchaser: req.user.email })
-            .populate({
-                path: 'products.product',
-                select: 'title price',
-                model: 'products'
-            })
-            .sort({ purchase_datetime: -1 })
-            .exec();
+        const tickets = await ticketRepository.getTicketsByUser(req.user.email);
 
         const ticketsFormatted = tickets.map(ticket => ({
             code: ticket.code,
@@ -128,22 +113,23 @@ router.get('/', requireUser, async (req, res) => {
     }
 });
 
-// GET /api/tickets/:ticketCode - Obtengo un ticket especifico
+// GET /api/tickets/:ticketCode - Obtener ticket específico
 router.get('/:ticketCode', requireUser, async (req, res) => {
     try {
-        const ticket = await ticketModel.findOne({ 
-            code: req.params.ticketCode,
-            purchaser: req.user.email 
-        }).populate({
-            path: 'products.product',
-            select: 'title price',
-            model: 'products'
-        }).exec();
+        const ticket = await ticketRepository.getTicketByCode(req.params.ticketCode);
 
         if (!ticket) {
             return res.status(404).json({
                 status: 'error',
                 message: 'Ticket no encontrado'
+            });
+        }
+
+        // Verificar que el ticket pertenezca al usuario
+        if (ticket.purchaser !== req.user.email) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'No tienes permisos para ver este ticket'
             });
         }
 
@@ -169,14 +155,14 @@ router.get('/:ticketCode', requireUser, async (req, res) => {
 
 // Funciones auxiliares
 
-// Valido el stock de los productos
+// Validar stock de productos
 async function validateStock(products) {
     const errors = [];
     let isValid = true;
 
     for (const item of products) {
         try {
-            const product = await ProductService.getProductByID(item.product._id);
+            const product = await productRepository.getProductById(item.product._id);
             
             if (product.stock < item.quantity) {
                 errors.push({
@@ -199,14 +185,14 @@ async function validateStock(products) {
     return { isValid, errors };
 }
 
-// Actualizo el stock de los productos
+// Actualizar stock de productos
 async function updateProductStock(products) {
     for (const item of products) {
         try {
-            const product = await ProductService.getProductByID(item.product._id);
+            const product = await productRepository.getProductById(item.product._id);
             const newStock = product.stock - item.quantity;
             
-            await ProductService.updateProduct(item.product._id, { stock: newStock });
+            await productRepository.updateProduct(item.product._id, { stock: newStock });
         } catch (error) {
             console.error(`Error actualizando stock del producto ${item.product._id}:`, error);
             throw new Error('Error actualizando stock de productos');
