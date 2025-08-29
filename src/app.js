@@ -12,6 +12,7 @@ import sessionRouter from './routes/sessionRouter.js';
 import ticketRouter from './routes/ticketRouter.js';
 import __dirname from './utils/constantsUtil.js';
 import websocket from './websocket.js';
+import recoveryRouter from './routes/recoveryRouter.js';
 
 import './config/passport.config.js';
 
@@ -43,6 +44,7 @@ app.use('/api/carts', cartRouter);
 app.use('/api/sessions', sessionRouter);
 app.use('/api/tickets', ticketRouter);
 app.use('/', viewsRouter);
+app.use('/api/recovery', recoveryRouter);
 
 const PORT = process.env.PORT || 8080;
 const httpServer = app.listen(PORT, () => {
