@@ -24,8 +24,8 @@ async createCart() {
 }
 
 // Metodo para agregar un producto a un carrito
-async addProductToCart(cartId, productId) {
-    const result = await this.dao.addProductByID(cartId, productId);
+async addProductToCart(cartId, productId, quantity = 1) {
+    const result = await this.dao.addProductByID(cartId, productId, quantity);
     return CartDTO.fromCart(result);
 }
 

@@ -55,7 +55,7 @@ router.post('/request', async (req, res) => {
         // Enviar email
         const emailSent = await sendEmail(
             user.email,
-            'Recuperación de Contraseña - Tu Ecommerce',
+            'Recuperación de Contraseña - Ecommerce Coder',
             emailHtml
         );
 

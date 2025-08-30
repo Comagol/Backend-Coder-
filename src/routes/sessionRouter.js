@@ -15,7 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'contraseña_secreta_codercoder123'
 // POST /api/sessions/register - Registro de usuario
 router.post('/register', async (req, res) => {
   try {
-      const { first_name, last_name, email, password, age } = req.body;
+      const { first_name, last_name, email, password, age, role } = req.body;
 
       // Crear el carrito del usuario
       const newCart = new cartModel({
@@ -30,6 +30,7 @@ router.post('/register', async (req, res) => {
           email,
           password,
           age,
+          role,
           cart: newCart._id
       });
 

@@ -22,11 +22,11 @@ class cartDBManager {
         return await cartModel.create({products: []});
     }
 
-    async addProductByID(cid, pid) {
+    async addProductByID(cid, pid, quantity = 1) {
         await this.productDBManager.getProductByID(pid);
-
+    
         const cart = await cartModel.findOne({ _id: cid});
-
+    
         if (!cart) throw new Error(`El carrito ${cid} no existe!`);
     
         let i = null;
@@ -36,17 +36,17 @@ class cartDBManager {
                 return item.product.toString() === pid;
             }
         );
-
+    
         if (result.length > 0) {
-            cart.products[i].quantity += 1;
+            cart.products[i].quantity += quantity;  
         } else {
             cart.products.push({
                 product: pid,
-                quantity: 1
+                quantity: quantity  
             });
         }
         await cartModel.updateOne({ _id: cid }, { products: cart.products});
-
+    
         return await this.getProductsFromCartByID(cid);
     }
 

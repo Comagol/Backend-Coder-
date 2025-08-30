@@ -1,31 +1,37 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer"
 
-//CONFIGO EL TRANSPORTADOR DE EMAIL
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
+    host: 'smtp.ethereal.email',
+    port: 587,
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: 'felton39@ethereal.email',
+        pass: 'ws3gyr88MZtyS5tcf1'
     }
 });
 
-//funcion para envial email
-export const sendEmail = async (to, subject, html) => {
-  try {
-      const mailOptions = {
-          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-          to: to,
-          subject: subject,
-          html: html
-      };
+const enviarMail = (to, subject, message) => {
+    return transporter.sendMail({
+        from: "Ecommerce Coder <felton39@ethereal.email>",
+        to: to,
+        subject: subject,
+        html: message
+    });
+}
 
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Email enviado:', info.messageId);
-      return true;
-  } catch (error) {
-      console.error('Error enviando email:', error);
-      return false;
-  }
-};
+// Función para usar en nuestro sistema
+export const sendEmail = async (to, subject, html) => {
+    try {
+        const result = await enviarMail(to, subject, html);
+        
+        if (result.rejected && result.rejected.length > 0) {
+            return false;
+        }
+
+        return true;
+        
+    } catch (error) {
+        return false;
+    }
+}
 
 export default transporter;

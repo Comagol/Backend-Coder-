@@ -11,11 +11,20 @@ const recoveryTokenSchema = new mongoose.Schema({
   },
   token: {
     type: String,
-    required: true
+    required: true,
+    unique: true,
+    default: function() {
+        // Generar token único
+        return crypto.randomBytes(32).toString('hex');
+    }
   },
-  expiresAt:{
+  expiresAt: {
     type: Date,
-    required: true
+    required: true,
+    default: function() {
+        // Token expira en 1 hora
+        return new Date(Date.now() + 60 * 60 * 1000);
+    }
   },
   used: {
     type: Boolean,
@@ -23,20 +32,7 @@ const recoveryTokenSchema = new mongoose.Schema({
   }
 });
 
-// Middleware para generar token antes de guardar
-recoveryTokenSchema.pre('save', function(next) {
-  if (!this.token) {
-      // Genero token único
-      this.token = crypto.randomBytes(32).toString('hex');
-  }
-  if (!this.expiresAt) {
-      // Token expira en 1 hora
-      this.expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-  }
-  next();
-});
-
-// metodo para verificar si el token es valido
+// Metodo para verificar si el token es valido
 recoveryTokenSchema.methods.isValid = function() {
   return !this.used && this.expiresAt > new Date();
 };

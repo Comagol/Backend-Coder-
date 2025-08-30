@@ -67,7 +67,17 @@ router.post('/:cid/product/:pid', requireUser, async (req, res) => {
             });
         }
 
-        const result = await cartRepository.addProductToCart(req.params.cid, req.params.pid);
+        
+        const quantity = req.body.quantity !== undefined ? req.body.quantity : 1;
+        
+        if (quantity < 1) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'La cantidad debe ser mayor o igual a 1'
+            });
+        }
+
+        const result = await cartRepository.addProductToCart(req.params.cid, req.params.pid, quantity);
         const cartSummary = await cartRepository.getCartSummary(req.params.cid);
         
         res.json({

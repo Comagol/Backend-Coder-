@@ -10,9 +10,9 @@ import cartRouter from './routes/cartRouter.js';
 import viewsRouter from './routes/viewsRouter.js';
 import sessionRouter from './routes/sessionRouter.js';
 import ticketRouter from './routes/ticketRouter.js';
+import recoveryRouter from './routes/recoveryRouter.js';
 import __dirname from './utils/constantsUtil.js';
 import websocket from './websocket.js';
-import recoveryRouter from './routes/recoveryRouter.js';
 
 import './config/passport.config.js';
 
